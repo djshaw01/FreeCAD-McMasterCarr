@@ -29,6 +29,7 @@ class BrowserGuiTests(unittest.TestCase):
             profile=profile,
             initial_url=self.QtCore.QUrl.fromLocalFile(str(page)).toString(),
         )
+        browser._storage_dir = Path(directory.name) / "owned"
         browser._test_directory = directory
         return browser, page
 
