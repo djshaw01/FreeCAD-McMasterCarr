@@ -21,10 +21,13 @@ shows an error and does not fall back to an external browser.
 ### FreeCAD user `Mod` directory
 
 1. Download or clone this repository.
-2. Copy the repository directory into FreeCAD's user `Mod` directory, using
-   `McMasterCarr` as its directory name.
-3. Restart FreeCAD.
-4. Select **View → Workbench → McMaster-Carr**.
+2. Create the destination directory `Mod/McMasterCarr` inside FreeCAD's user
+   data directory.
+3. Copy the repository **contents** into that directory. `Init.py` and
+   `InitGui.py` must be directly inside `Mod/McMasterCarr`, not directly inside
+   `Mod` and not inside an extra nested `FreeCAD-McMasterCarr` directory.
+4. Restart FreeCAD.
+5. Select **View → Workbench → McMaster-Carr**.
 
 The resulting layout must contain these files:
 
@@ -41,7 +44,10 @@ Mod/
 Typical user `Mod` locations are:
 
 - **Windows:** `%APPDATA%\\FreeCAD\\Mod`
-- **macOS:** `~/Library/Application Support/FreeCAD/Mod`
+- **macOS:** commonly `~/Library/Preferences/FreeCAD/Mod` for the stock
+  FreeCAD package. Some distributions use
+  `~/Library/Application Support/FreeCAD/Mod`; use the path reported by
+  `App.getUserAppDataDir()` in FreeCAD's Python console.
 - **Linux:** `~/.local/share/FreeCAD/Mod` (older installations may use
   `~/.FreeCAD/Mod`)
 
