@@ -12,6 +12,11 @@ ERROR_MESSAGE = (
 _catalog_window = None
 
 
+def _clear_catalog_window():
+    global _catalog_window
+    _catalog_window = None
+
+
 class OpenCatalogCommand:
     def GetResources(self):
         return {
@@ -30,6 +35,7 @@ class OpenCatalogCommand:
             from .browser import McMasterBrowserWindow
             if _catalog_window is None:
                 _catalog_window = McMasterBrowserWindow(Gui.getMainWindow())
+                _catalog_window.destroyed.connect(_clear_catalog_window)
             _catalog_window.show()
             _catalog_window.raise_()
             _catalog_window.activateWindow()
