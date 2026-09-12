@@ -149,6 +149,22 @@ licenses still apply. Review and accept those terms yourself.
 - Restart FreeCAD after copying files.
 - Check FreeCAD's Python console and log for import errors.
 
+For a direct startup traceback, paste this complete probe into FreeCAD's
+Python console. It derives the user-data path from the running FreeCAD build;
+do not replace it with a guessed macOS path:
+
+```python
+import os
+root = os.path.join(App.getUserAppDataDir(), "Mod", "McMasterCarr")
+print(root, os.path.isfile(os.path.join(root, "InitGui.py")))
+exec(compile(open(os.path.join(root, "InitGui.py"), encoding="utf-8").read(), "InitGui.py", "exec"))
+```
+
+Expected output includes the path and `True`. If it prints `False`, copy the
+repository contents so `InitGui.py` is directly under that printed directory.
+If it prints `True` and shows a traceback, share that traceback; it identifies
+the startup import failure.
+
 ### WebEngine dependency error
 
 Install a FreeCAD package that includes PySide6 Qt WebEngine modules. The
