@@ -28,6 +28,13 @@ class BrowserPage(QtWebEngineCore.QWebEnginePage):
     def createWindow(self, window_type):
         return self.owner.add_tab().page()
 
+    def certificateError(self, error):
+        self.owner._status.setText(f"TLS certificate error: {error.errorDescription()}")
+        return False
+
+    def renderProcessTerminated(self, termination_status, exit_code):
+        self.owner._status.setText(f"Renderer terminated (exit code {exit_code})")
+
 
 class BrowserView(QtWebEngineWidgets.QWebEngineView):
     def __init__(self, owner):

@@ -35,10 +35,9 @@ class ImporterTests(unittest.TestCase):
         with mock.patch.dict(sys.modules, {"FreeCAD": app, "FreeCADGui": gui, "ImportGui": imp}):
             sys.modules.pop("McMasterCarr.importer", None)
             from McMasterCarr.importer import import_step
-            messages = []
-            import_step(pathlib.Path("x.step"), "Doc", messages.append)
+            with self.assertRaisesRegex(RuntimeError, "bad"):
+                import_step(pathlib.Path("x.step"), "Doc")
         self.assertEqual(doc.events[-1], "abort")
-        self.assertIn("bad", messages[0])
 
 
 if __name__ == "__main__":

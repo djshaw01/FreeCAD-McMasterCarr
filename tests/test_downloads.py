@@ -35,11 +35,14 @@ class FakeWindow:
     def __init__(self): self.messages = []
     def statusBar(self): return self
     def showMessage(self, text): self.messages.append(text)
+    def menuBar(self): return self
+    def addAction(self, action): return action
 
 
 class DownloadTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        qtgui = types.SimpleNamespace(QAction=type("QAction", (), {"__init__": lambda self, *args: None, "setEnabled": lambda self, value: None, "triggered": Signal()}))
         qtcore = types.SimpleNamespace(QObject=type("QObject", (), {"__init__": lambda self, parent=None: None}), Signal=Signal)
         qtwidgets = types.SimpleNamespace(QFileDialog=types.SimpleNamespace(getSaveFileName=lambda *args: ("", "")))
         states = types.SimpleNamespace(DownloadInterrupted=1, DownloadCancelled=2, DownloadCompleted=3)
@@ -47,7 +50,7 @@ class DownloadTests(unittest.TestCase):
         freecad = types.SimpleNamespace(ActiveDocument=types.SimpleNamespace(Name="Doc"))
         freecadgui = types.SimpleNamespace()
         importgui = types.SimpleNamespace()
-        with mock.patch.dict(sys.modules, {"PySide6": types.SimpleNamespace(QtCore=qtcore, QtWidgets=qtwidgets, QtWebEngineCore=webcore), "PySide6.QtCore": qtcore, "PySide6.QtWidgets": qtwidgets, "PySide6.QtWebEngineCore": webcore, "FreeCAD": freecad, "FreeCADGui": freecadgui, "ImportGui": importgui}):
+        with mock.patch.dict(sys.modules, {"PySide6": types.SimpleNamespace(QtCore=qtcore, QtGui=qtgui, QtWidgets=qtwidgets, QtWebEngineCore=webcore), "PySide6.QtCore": qtcore, "PySide6.QtGui": qtgui, "PySide6.QtWidgets": qtwidgets, "PySide6.QtWebEngineCore": webcore, "FreeCAD": freecad, "FreeCADGui": freecadgui, "ImportGui": importgui}):
             sys.modules.pop("McMasterCarr.downloads", None)
             import McMasterCarr.downloads as downloads
             cls.downloads = downloads

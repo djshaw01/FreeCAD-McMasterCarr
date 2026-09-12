@@ -3,7 +3,7 @@
 from pathlib import Path
 from urllib.parse import urlparse
 
-from PySide6 import QtCore, QtWidgets, QtWebEngineCore
+from PySide6 import QtCore, QtGui, QtWidgets, QtWebEngineCore
 import FreeCAD as App
 
 from . import importer
@@ -27,6 +27,15 @@ class DownloadController(QtCore.QObject):
         self.window = window
         self.profile = profile
         self.active = None
+        self.cancel_action = QtGui.QAction("Cancel STEP download", window)
+        self.cancel_action.setEnabled(False)
+        self.cancel_action.triggered.connect(self.cancel_active)
+        window.menuBar().addAction(self.cancel_action)
+
+    def cancel_active(self):
+        if self.active is not None:
+            self.active[0].cancel()
+            self._report("Cancelling STEP download…")
 
     def set_profile(self, profile):
         self.profile = profile
@@ -58,6 +67,7 @@ class DownloadController(QtCore.QObject):
         request.setDownloadDirectory(str(target.parent))
         request.setDownloadFileName(target.name)
         self.active = (request, target, document.Name)
+        self.cancel_action.setEnabled(True)
         request.receivedBytesChanged.connect(self._progress)
         request.totalBytesChanged.connect(self._progress)
         request.stateChanged.connect(self._state_changed)
@@ -79,11 +89,18 @@ class DownloadController(QtCore.QObject):
         elif state == QtWebEngineCore.QWebEngineDownloadRequest.DownloadState.DownloadCompleted:
             if not path.is_file() or path.stat().st_size == 0:
                 self._report("Downloaded file is not a STEP exchange file.")
-            elif not path.read_bytes().lstrip().startswith(b"ISO-10303-21;"):
-                self._report("Downloaded file is not a STEP exchange file.")
             else:
-                importer.import_step(path, document_name, self._report)
+                with path.open("rb") as stream:
+                    header = stream.read(4096).lstrip()
+                if not header.startswith(b"ISO-10303-21;"):
+                    self._report("Downloaded file is not a STEP exchange file.")
+                else:
+                    try:
+                        importer.import_step(path, document_name)
+                    except RuntimeError as exc:
+                        self._report(str(exc))
         if state in (QtWebEngineCore.QWebEngineDownloadRequest.DownloadState.DownloadInterrupted,
                      QtWebEngineCore.QWebEngineDownloadRequest.DownloadState.DownloadCancelled,
                      QtWebEngineCore.QWebEngineDownloadRequest.DownloadState.DownloadCompleted):
+            self.cancel_action.setEnabled(False)
             self.active = None
