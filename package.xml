@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package format="1">
+  <name>McMaster-Carr Importer</name>
+  <description>Browse McMaster-Carr and import STEP models into FreeCAD.</description>
+  <version>0.1.0</version>
+  <date>2026-09-12</date>
+  <maintainer email="no-one@freecad.org">No current maintainer</maintainer>
+  <license file="LICENSE">LGPL-2.1-or-later</license>
+  <url type="repository" branch="main">https://github.com/djshaw01/FreeCAD-McMasterCarr</url>
+  <url type="readme">https://github.com/djshaw01/FreeCAD-McMasterCarr/raw/main/README.md</url>
+  <freecadmin>1.1.0</freecadmin>
+  <workbench>
+    <classname>McMasterCarrWorkbench</classname>
+    <subdirectory>./</subdirectory>
+    <icon>Resources/icons/McMasterCarr.svg</icon>
+  </workbench>
+  <depend type="internal">import</depend>
+  <depend type="python">PySide6-Addons</depend>
+</package>
