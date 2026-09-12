@@ -27,6 +27,19 @@ class ImporterTests(unittest.TestCase):
         imp.insert.assert_called_once_with("x.step", "Doc")
         self.assertEqual(doc.events, [("open", "Import McMaster-Carr STEP"), "recompute", "commit"])
 
+    def test_rejects_changed_active_document(self):
+        original = Document()
+        current = Document()
+        app = types.SimpleNamespace(ActiveDocument=current, getDocument=lambda name: original)
+        imp = types.SimpleNamespace(insert=mock.Mock())
+        gui = types.SimpleNamespace()
+        with mock.patch.dict(sys.modules, {"FreeCAD": app, "FreeCADGui": gui, "ImportGui": imp}):
+            sys.modules.pop("McMasterCarr.importer", None)
+            from McMasterCarr.importer import import_step
+            with self.assertRaisesRegex(RuntimeError, "Active document changed"):
+                import_step(pathlib.Path("x.step"), "Doc")
+        imp.insert.assert_not_called()
+
     def test_import_aborts_on_failure(self):
         doc = Document()
         app = types.SimpleNamespace(ActiveDocument=doc, getDocument=lambda name: doc)
