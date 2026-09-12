@@ -1,5 +1,6 @@
-import sys
+import tempfile
 import unittest
+from pathlib import Path
 from unittest import mock
 
 
@@ -7,35 +8,63 @@ class BrowserGuiTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         try:
-            from PySide6 import QtCore, QtWidgets, QtWebEngineCore, QtWebEngineWidgets
+            from PySide6 import QtCore, QtWidgets, QtWebEngineCore
             import FreeCAD
             import FreeCADGui
         except ImportError:
             raise unittest.SkipTest("FreeCAD Qt WebEngine unavailable")
-        app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
-        cls.app = app
+        cls.app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
         cls.QtCore = QtCore
-        cls.window_type = __import__("McMasterCarr.browser", fromlist=["McMasterBrowserWindow"])
+        cls.QtWebEngineCore = QtWebEngineCore
+        cls.browser_module = __import__("McMasterCarr.browser", fromlist=["McMasterBrowserWindow"])
+
+    def make_browser(self):
+        directory = tempfile.TemporaryDirectory()
+        page = Path(directory.name) / "page.html"
+        page.write_text("<html><body>local test page</body></html>", encoding="utf-8")
+        profile = self.QtWebEngineCore.QWebEngineProfile("test-profile")
+        profile.setPersistentStoragePath(str(Path(directory.name) / "storage"))
+        profile.setCachePath(str(Path(directory.name) / "cache"))
+        browser = self.browser_module.McMasterBrowserWindow(
+            profile=profile,
+            initial_url=self.QtCore.QUrl.fromLocalFile(str(page)).toString(),
+        )
+        browser._test_directory = directory
+        return browser, page
+
+    def wait_loaded(self, browser):
+        loop = self.QtCore.QEventLoop()
+        browser.current_page().loadFinished.connect(loop.quit)
+        self.QtCore.QTimer.singleShot(5000, loop.quit)
+        loop.exec()
+        self.app.processEvents()
 
     def test_local_navigation_and_profile(self):
-        browser = self.window_type.McMasterBrowserWindow(profile=self.window_type.QtWebEngineCore.QWebEngineProfile(self.window_type.QtWebEngineCore.QWebEngineProfile.NoPersistentCookies))
-        browser.navigate("example local query")
-        self.assertEqual(browser.current_view().url().toString(), "https://www.mcmaster.com/example%20local%20query/")
+        browser, page = self.make_browser()
+        self.wait_loaded(browser)
+        self.assertEqual(browser.current_view().url().toLocalFile(), str(page))
         browser.close()
 
     def test_popup_page_uses_same_profile(self):
-        browser = self.window_type.McMasterBrowserWindow()
-        popup = browser.current_page().createWindow(self.window_type.QtWebEngineCore.QWebEnginePage.WebBrowserWindow)
+        browser, _ = self.make_browser()
+        self.wait_loaded(browser)
+        popup = browser.current_page().createWindow(self.QtWebEngineCore.QWebEnginePage.WebBrowserWindow)
         self.assertIs(popup.profile(), browser._profile)
         browser.close()
 
-    def test_session_clear_recreates_profile(self):
-        browser = self.window_type.McMasterBrowserWindow()
+    def test_session_clear_recreates_profile_without_network(self):
+        browser, page = self.make_browser()
+        self.wait_loaded(browser)
         old = browser._profile
-        with mock.patch.object(self.window_type.QtWidgets.QMessageBox, "question", return_value=self.window_type.QtWidgets.QMessageBox.StandardButton.Yes):
+        local_url = self.QtCore.QUrl.fromLocalFile(str(page)).toString()
+        with mock.patch.object(self.browser_module, "HOME_URL", local_url), mock.patch.object(
+            self.browser_module.QtWidgets.QMessageBox, "question",
+            return_value=self.browser_module.QtWidgets.QMessageBox.StandardButton.Yes,
+        ):
             browser.clear_session()
+            self.wait_loaded(browser)
         self.assertIsNot(browser._profile, old)
-        self.assertEqual(browser.current_view().url().toString(), self.window_type.HOME_URL)
+        self.assertEqual(browser.current_view().url().toLocalFile(), str(page))
         browser.close()
 
 

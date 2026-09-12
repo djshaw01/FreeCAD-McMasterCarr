@@ -46,7 +46,7 @@ class BrowserView(QtWebEngineWidgets.QWebEngineView):
 
 
 class McMasterBrowserWindow(QtWidgets.QMainWindow):
-    def __init__(self, parent=None, profile=None):
+    def __init__(self, parent=None, profile=None, initial_url=HOME_URL):
         super().__init__(parent)
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
         self.setWindowTitle("McMaster-Carr")
@@ -62,7 +62,7 @@ class McMasterBrowserWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(self._tabs)
         self._build_toolbar()
         self._build_menu()
-        self.add_tab("Catalog", HOME_URL)
+        self.add_tab("Catalog", initial_url)
 
     def _new_profile(self):
         self._storage_dir.mkdir(parents=True, exist_ok=True)
