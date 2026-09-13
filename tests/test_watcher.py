@@ -27,11 +27,57 @@ class Timer:
 class WatcherTests(unittest.TestCase):
     def setUp(self):
         app = types.SimpleNamespace()
-        qtcore = types.SimpleNamespace(QObject=QObject, Signal=Signal, QTimer=Timer)
+        class StandardPaths:
+            DownloadLocation = object()
+            location = ""
+            @classmethod
+            def writableLocation(cls, location): return cls.location
+        qtcore = types.SimpleNamespace(QObject=QObject, Signal=Signal, QTimer=Timer, QStandardPaths=StandardPaths)
         modules = {"FreeCAD": app, "FreeCADGui": types.SimpleNamespace(), "ImportGui": types.SimpleNamespace(), "PySide": types.SimpleNamespace(QtCore=qtcore)}
         with mock.patch.dict(sys.modules, modules):
             for name in ("McMasterCarr.watcher", "McMasterCarr.importer"): sys.modules.pop(name, None)
             self.watcher = __import__("McMasterCarr.watcher", fromlist=["DownloadWatchSession"])
+    def test_qt_download_directory_is_normalized(self):
+        with tempfile.TemporaryDirectory() as folder:
+            self.watcher.QtCore.QStandardPaths.location = folder
+            self.assertEqual(self.watcher.system_download_directory(), Path(folder).resolve())
+
+    def test_missing_qt_download_directory_returns_none(self):
+        self.watcher.QtCore.QStandardPaths.location = ""
+        self.assertIsNone(self.watcher.system_download_directory())
+    def test_qt_download_root_is_watched_when_distinct(self):
+        with tempfile.TemporaryDirectory() as destination, tempfile.TemporaryDirectory() as downloads:
+            self.watcher.QtCore.QStandardPaths.location = downloads
+            session = self.watcher.DownloadWatchSession(Path(destination), "Doc")
+            self.assertEqual(session.directories, (Path(destination).resolve(), Path(downloads).resolve()))
+    def test_qt_download_root_same_as_destination_is_deduplicated(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            self.watcher.QtCore.QStandardPaths.location = str(root)
+            session = self.watcher.DownloadWatchSession(root, "Doc")
+            self.assertEqual(session.directories, (root.resolve(),))
+
+    def test_nonexistent_qt_download_root_watches_only_destination(self):
+        with tempfile.TemporaryDirectory() as destination, tempfile.TemporaryDirectory() as missing:
+            root = Path(destination)
+            self.watcher.QtCore.QStandardPaths.location = str(Path(missing) / "gone")
+            session = self.watcher.DownloadWatchSession(root, "Doc")
+            self.assertEqual(session.directories, (root.resolve(),))
+
+    def test_qt_download_root_handles_linux_style_nested_path(self):
+        with tempfile.TemporaryDirectory() as home:
+            downloads = Path(home) / "XDG" / "Downloads"
+            downloads.mkdir(parents=True)
+            self.watcher.QtCore.QStandardPaths.location = str(downloads)
+            session = self.watcher.DownloadWatchSession(Path(home) / "destination", "Doc")
+            self.assertEqual(session.directories[1], downloads.resolve())
+
+    def test_same_system_directory_override_is_not_duplicated(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            session = self.watcher.DownloadWatchSession(root, "Doc", system_directory=root)
+            self.assertEqual(session.directories, (root.resolve(),))
+
 
     def test_new_valid_file_requires_two_stable_scans(self):
         with tempfile.TemporaryDirectory() as folder:

@@ -2,6 +2,7 @@ import sys
 import tempfile
 import types
 import unittest
+from pathlib import Path
 from unittest import mock
 
 
@@ -32,7 +33,12 @@ class CommandTests(unittest.TestCase):
         self.messages = []
         box = types.SimpleNamespace(critical=lambda *a: self.messages.append(("critical", a[-1])), information=lambda *a: self.messages.append(("information", a[-1])))
         self.url = mock.Mock(return_value=True)
-        self.qtcore = types.SimpleNamespace(QObject=QObject, Signal=Signal, QUrl=lambda x: x)
+        class StandardPaths:
+            DownloadLocation = object()
+            location = ""
+            @classmethod
+            def writableLocation(cls, location): return cls.location
+        self.qtcore = types.SimpleNamespace(QObject=QObject, Signal=Signal, QUrl=lambda x: x, QStandardPaths=StandardPaths)
         self.qtgui = types.SimpleNamespace(QDesktopServices=types.SimpleNamespace(openUrl=self.url))
         self.picker = mock.Mock(return_value="")
         widgets = types.SimpleNamespace(QMessageBox=box, QFileDialog=types.SimpleNamespace(getExistingDirectory=self.picker), QProgressDialog=ProgressDialog)
@@ -49,6 +55,25 @@ class CommandTests(unittest.TestCase):
     def test_empty_preference_prompts_and_cancel_is_noop(self):
         with mock.patch.object(self.command, "DownloadWatchSession") as session: self.command.BrowseCatalogCommand().Activated()
         self.picker.assert_called_once(); session.assert_not_called(); self.url.assert_not_called()
+    def test_empty_preference_uses_qt_download_directory(self):
+        with tempfile.TemporaryDirectory() as folder:
+            self.command.QtCore.QStandardPaths.location = folder
+            with mock.patch.object(self.command, "DownloadWatchSession") as session:
+                self.command.BrowseCatalogCommand().Activated()
+            self.assertEqual(self.picker.call_args.args[2], str(Path(folder).resolve()))
+            session.assert_not_called()
+    def test_empty_preference_falls_back_to_home_when_qt_path_missing(self):
+        self.command.QtCore.QStandardPaths.location = ""
+        with mock.patch.object(self.command, "DownloadWatchSession") as session:
+            self.command.BrowseCatalogCommand().Activated()
+        self.assertEqual(self.picker.call_args.args[2], str(Path.home().resolve()))
+        session.assert_not_called()
+    def test_empty_preference_falls_back_home_for_nonexistent_qt_path(self):
+        self.command.QtCore.QStandardPaths.location = "/path/that/does/not/exist"
+        with mock.patch.object(self.command, "DownloadWatchSession") as session:
+            self.command.BrowseCatalogCommand().Activated()
+        self.assertEqual(self.picker.call_args.args[2], str(Path.home().resolve()))
+        session.assert_not_called()
 
     def test_session_starts_before_browser(self):
         with tempfile.TemporaryDirectory() as folder, mock.patch.object(self.command, "DownloadWatchSession") as cls:

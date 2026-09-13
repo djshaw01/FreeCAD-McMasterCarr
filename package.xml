@@ -4,11 +4,15 @@
   <description>Browse McMaster-Carr and import STEP models into FreeCAD.</description>
   <version>0.1.0</version>
   <date>2026-09-12</date>
-  <maintainer email="no-one@freecad.org">No current maintainer</maintainer>
+  <maintainer email="dan@danieljshaw.com">Daniel Shaw</maintainer>
   <license file="LICENSE">LGPL-2.1-or-later</license>
-  <url type="repository" branch="main">https://github.com/djshaw01/FreeCAD-McMasterCarr</url>
+  <url type="repository" branch="release">https://github.com/djshaw01/FreeCAD-McMasterCarr</url>
   <url type="readme">https://github.com/djshaw01/FreeCAD-McMasterCarr/raw/main/README.md</url>
   <icon>Resources/icons/McMasterCarr.svg</icon>
+  <tag>McMaster-Carr</tag>
+  <tag>STEP</tag>
+  <tag>import</tag>
+  <tag>parts</tag>
   <content>
     <workbench>
       <name>McMaster-Carr</name>

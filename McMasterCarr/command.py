@@ -3,7 +3,7 @@ from pathlib import Path
 import FreeCAD as App
 import FreeCADGui as Gui
 from PySide import QtCore, QtGui, QtWidgets
-from .watcher import DownloadWatchSession
+from .watcher import DownloadWatchSession, system_download_directory
 
 TITLE = "McMaster-Carr Importer"
 NO_DOCUMENT = "Open or create a FreeCAD document before browsing for a STEP file."
@@ -48,7 +48,8 @@ class BrowseCatalogCommand:
         stored = parameter.GetString("DownloadDirectory", "").strip()
         directory = Path(stored).expanduser() if stored else None
         if directory is None or not directory.is_dir():
-            chosen = QtWidgets.QFileDialog.getExistingDirectory(Gui.getMainWindow(), "Choose browser download folder", str(Path.home() / "Downloads"))
+            initial_directory = system_download_directory() or Path.home().resolve()
+            chosen = QtWidgets.QFileDialog.getExistingDirectory(Gui.getMainWindow(), "Choose browser download folder", str(initial_directory))
             if not chosen:
                 return
             directory = Path(chosen)

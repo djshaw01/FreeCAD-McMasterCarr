@@ -8,6 +8,18 @@ from PySide import QtCore
 from .importer import import_step
 
 
+def system_download_directory() -> Path | None:
+    """Return existing system Downloads directory reported by Qt."""
+    try:
+        location = QtCore.QStandardPaths.writableLocation(QtCore.QStandardPaths.DownloadLocation)
+    except (AttributeError, TypeError):
+        return None
+    if not location:
+        return None
+    directory = Path(location).expanduser().resolve()
+    return directory if directory.is_dir() else None
+
+
 def is_step_file(path: Path) -> bool:
     if path.suffix.lower() not in (".step", ".stp"):
         return False
@@ -67,8 +79,11 @@ class DownloadWatchSession(QtCore.QObject):
     def __init__(self, directory: Path, document_name: str, parent=None, system_directory=None):
         super().__init__(parent)
         self.directory = Path(directory).expanduser().resolve()
-        system = Path(system_directory).expanduser().resolve() if system_directory else Path.home().joinpath("Downloads").resolve()
-        self.directories = (self.directory,) if system == self.directory else (self.directory, system)
+        if system_directory is not None:
+            system = Path(system_directory).expanduser().resolve()
+        else:
+            system = system_download_directory()
+        self.directories = (self.directory,) if system is None or system == self.directory else (self.directory, system)
         self.document_name = document_name
         self.timer = QtCore.QTimer(self)
         self.timer.setInterval(1000)
