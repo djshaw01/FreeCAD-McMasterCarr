@@ -8,6 +8,4 @@ htmlcov/
 .idea/
 *.FCStd1
 *.FCBak
-McMasterCarr/WebEngine/
-McMasterCarr/downloads/
 tests/.step-cache/

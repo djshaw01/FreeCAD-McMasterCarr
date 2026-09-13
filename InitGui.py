@@ -3,7 +3,7 @@
 import FreeCADGui as Gui
 
 
-class McMasterCarrWorkbench(Gui.Workbench):
+class McMasterCarrWorkbench(Workbench):
     MenuText = "McMaster-Carr"
     ToolTip = "Browse McMaster-Carr and import STEP models"
     Icon = "Resources/icons/McMasterCarr.svg"
@@ -12,11 +12,14 @@ class McMasterCarrWorkbench(Gui.Workbench):
         return "Gui::PythonWorkbench"
 
     def Initialize(self):
-        from McMasterCarr.command import OpenCatalogCommand
+        from McMasterCarr.command import BrowseCatalogCommand
+        from McMasterCarr.preferences import PreferencesPage
 
-        Gui.addCommand("McMasterCarr_OpenCatalog", OpenCatalogCommand())
-        self.appendMenu(self.MenuText, ["McMasterCarr_OpenCatalog"])
-        self.appendToolbar(self.MenuText, ["McMasterCarr_OpenCatalog"])
+        name = "McMasterCarr_BrowseCatalog"
+        Gui.addCommand(name, BrowseCatalogCommand())
+        self.appendMenu(self.MenuText, [name])
+        self.appendToolbar(self.MenuText, [name])
+        Gui.addPreferencePage(PreferencesPage, self.MenuText)
 
     def IsActive(self):
         return True
