@@ -13,7 +13,8 @@ class ManifestTests(unittest.TestCase):
     def test_manifest_declares_publication_metadata(self):
         root, ns = self.root, self.ns
         self.assertEqual(root.findtext("fc:name", namespaces=ns), "McMaster-Carr Importer")
-        self.assertEqual(root.findtext("fc:version", namespaces=ns), "0.1.0")
+        self.assertEqual(root.findtext("fc:version", namespaces=ns), "1.0.0")
+        self.assertEqual(root.findtext("fc:date", namespaces=ns), "2026-09-14")
         self.assertEqual(root.findtext("fc:maintainer", namespaces=ns), "Daniel Shaw")
         self.assertEqual(root.find("fc:maintainer", ns).get("email"), "dan@danieljshaw.com")
         repository = root.find("fc:url[@type='repository']", ns)

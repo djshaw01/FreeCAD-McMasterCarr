@@ -2,8 +2,8 @@
 <package format="1" xmlns="https://wiki.freecad.org/Package_Metadata">
   <name>McMaster-Carr Importer</name>
   <description>Browse McMaster-Carr and import STEP models into FreeCAD.</description>
-  <version>0.1.0</version>
-  <date>2026-09-12</date>
+  <version>1.0.0</version>
+  <date>2026-09-14</date>
   <maintainer email="dan@danieljshaw.com">Daniel Shaw</maintainer>
   <license file="LICENSE">LGPL-2.1-or-later</license>
   <url type="repository" branch="release">https://github.com/djshaw01/FreeCAD-McMasterCarr</url>

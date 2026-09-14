@@ -15,6 +15,7 @@ FreeCAD supplies required `PySide` Qt modules.
 1. Install repository contents in FreeCAD user `Mod/McMasterCarr`.
 2. Keep `Init.py`, `InitGui.py`, and `package.xml` directly in that directory.
 3. Restart FreeCAD and activate **McMaster-Carr**.
+4. After Addon Manager indexing, install **McMaster-Carr Importer** through **Tools → Addon Manager**; manual installation remains fallback.
 
 ## Workflow
 
